@@ -36,6 +36,43 @@ namespace SimpleTesting
             return orderedEvents.SequenceEqual(orderedComparison);
         }
 
+        public static bool IsEquivalentTo2<TPayload>(this IStreamable<Empty, TPayload> input, StreamEvent<TPayload>[] comparison)
+        {
+            Invariant.IsNotNull(input, "input");
+            Invariant.IsNotNull(comparison, "comparison");
+            var events = input.ToStreamEventArray();
+            var orderedEvents = events.OrderBy(e => e.SyncTime).ThenBy(e => e.OtherTime).ThenBy(e => e.Payload).ToArray();
+            var orderedComparison = comparison.OrderBy(e => e.SyncTime).ThenBy(e => e.OtherTime).ThenBy(e => e.Payload).ToArray();
+
+            if(orderedEvents.Length != orderedComparison.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < orderedEvents.Length; i++)
+            {
+                if (orderedEvents[i].StartTime != orderedComparison[i].StartTime)
+                {
+                    return false;
+                }
+                if (orderedEvents[i].IsPunctuation != orderedComparison[i].IsPunctuation)
+                {
+                    return false;
+                }
+                if (orderedEvents[i].EndTime != orderedComparison[i].EndTime)
+                {
+                    return false;
+                }
+                if (orderedEvents[i].IsData != orderedComparison[i].IsData ||
+                    orderedEvents[i].IsPunctuation != orderedComparison[i].IsPunctuation ||
+                    (orderedEvents[i].IsData && orderedEvents[i].Payload.Equals(orderedComparison[i].Payload)))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public static StreamEvent<TPayload>[] ToStreamEventArray<TPayload>(this IStreamable<Empty, TPayload> input)
         {
             Invariant.IsNotNull(input, "input");
