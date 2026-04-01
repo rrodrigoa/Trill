@@ -42,7 +42,7 @@ namespace SimpleTesting.Aggregates
 
         [TestMethod, TestCategory("Gated")]
         public void TestTumblingWindowAggregate()
-        { 
+        {
             /*
              * Time:    0 1 2 3 4 5
              * Input: a |
