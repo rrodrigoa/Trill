@@ -101,8 +101,7 @@ namespace Microsoft.StreamProcessing
         }
 
         /// <summary>
-        /// Given a string, <paramref name="sourceCode"/>, that represents a compilable assembly, compile it into an assembly which is located
-        /// in a sub-directory of the current working directory named "Generated", unless overriden by changing value of Config.GeneratedCodePath.
+        /// Compile and load source in memory. Debug builds may opt into files beneath Config.GeneratedCodePath.
         /// If it is successful, then the resulting assembly is loaded and returned. Otherwise, null is returned and the
         /// parameter <paramref name="errorMessages"/> will contain the compiler errors.
         /// The parameter <paramref name="references"/> allows the client to specify the location of assemblies that are needed to compile
@@ -118,7 +117,12 @@ namespace Microsoft.StreamProcessing
             sw.Start();
 #endif
 
+#if DEBUG
             bool includeDebugInfo = Config.CodegenOptions.GenerateDebugInfo;
+#else
+            // Customer builds must not write generated source, assemblies, or symbols, even if a caller changes the debug flag.
+            bool includeDebugInfo = false;
+#endif
             var uniqueReferences = references.Distinct();
 
             if (includeIgnoreAccessChecksAssembly)
@@ -192,6 +196,9 @@ namespace Microsoft.StreamProcessing
         internal static Assembly EmitCompilationAndLoadAssembly(CSharpCompilation compilation, bool makeAssemblyDebuggable, out string errorMessages)
         {
             Contract.Requires(compilation.SyntaxTrees.Count() == 1);
+#if !DEBUG
+            makeAssemblyDebuggable = false;
+#endif
 
             Assembly assembly = null;
             EmitResult emitResult;
